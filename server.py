@@ -3,7 +3,7 @@ import requests as r
 from models.employee_model import EmployeeModel
 import os
 
-mcp = FastMCP("Cam-Functions")
+
 
 mcp = FastMCP("Cam-Functions", dependencies=["requests"])
 
@@ -29,7 +29,7 @@ def employee(name:str)-> list[EmployeeModel] | None:
     header["Authorization"] = f"bearer {RRHH_PERSONAL_ACCESS_TOKEN}"
     
     RRHH_BASE_URL = os.getenv("RRHH_BASE_URL", "")
-    response = r.get(url=f"{RRHH_BASE_URL}/employees", headers=header)  
+    response = r.get(url=f"{RRHH_BASE_URL}/empleados/empleados/nombre/{name}", headers=header)  
     
     employees = []  
     if response.status_code == 200:
