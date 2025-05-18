@@ -1,0 +1,75 @@
+from mcp.server.fastmcp import FastMCP
+import requests as r
+from models.employee_model import EmployeeModel
+import os
+
+mcp = FastMCP("Cam-Functions")
+
+mcp = FastMCP("Cam-Functions", dependencies=["requests"])
+
+#RRHH_BASE_URL = "http://rrhh.administracionapi.camsoft.com.do:8086"
+header = {'Content-type': 'application/json',
+            'x-api-key': '002002032323232320002SSS',
+            'x-ui-culture': 'es-DO',
+            #'Authorization':  "bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJlc21lcmxpbmVwIiwidW5pcXVlX25hbWUiOiJlc21lcmxpbmVwIiwicm9sZSI6IlVzZXIiLCJVc2VySUQiOiIzMjQ2IiwiRnVsbFVzZXJOYW1lIjoiRXNtZXJsaW4gUGFuaWFndWEiLCJEYXRlVXRsQWNjZXNzIjoiIiwiQ29tcGFueUlkIjoiMiIsIkNvbXBhbnlHcm91cElkIjoiMSIsIkNsaWVudElkIjoiIiwiQnJhbmNoT2ZmaWNlSWQiOiIiLCJDb21wYW55TmFtZSI6IkRyZXMuIE1hbGzDqW4gR3VlcnJhIiwiT2ZmaWNlTmFtZSI6IiIsIkVtYWlsIjoiZXNtZXJsaW5lcEBnbWFpbC5jb20iLCJpc2FkbWluIjoiVHJ1ZSIsIm5iZiI6MTc0NjczNzczMSwiZXhwIjoxNzQ4ODk3NzMxLCJpYXQiOjE3NDY3Mzc3MzF9.wiaNUYisJBRY8HU5gcCp2vScVj_j2WsVUMq34tORbIU",  
+            }
+
+@mcp.tool()
+def employee(name:str)-> list[EmployeeModel] | None:
+    """
+        Busca empleados por nombre y devuelve una lista de objetos EmployeeModel.
+
+        Parámetros:
+            name (str): El nombre del empleado a buscar.
+
+        Retorna:
+                - Una lista de instancias de EmployeeModel que coinciden con el nombre proporcionado.
+    """
+    RRHH_PERSONAL_ACCESS_TOKEN = os.getenv("RRHH_PERSONAL_ACCESS_TOKEN", "")
+    header["Authorization"] = f"bearer {RRHH_PERSONAL_ACCESS_TOKEN}"
+    
+    RRHH_BASE_URL = os.getenv("RRHH_BASE_URL", "")
+    response = r.get(url=f"{RRHH_BASE_URL}/employees", headers=header)  
+    
+    employees = []  
+    if response.status_code == 200:
+        empleado_list = response.json()['result']
+        for data in empleado_list:
+            e =  EmployeeModel(
+                id=data["idEmpleado"],
+                full_name=data["nombreCompletoEmpleado"],
+                first_name=data.get("primerNombreEmpleado"),
+                last_name=data.get("primerApellidoEmpleado"),
+                department_name=data.get("nombre_Departamento"),
+                position_name=data.get("nombre_Puesto"),
+                company_id=data.get("idcompania"),
+                company_name=data.get("nombre_Compania"),
+                email=data.get("email"),
+                work_email=data.get("email_trabajo"),
+                phone=data.get("telefonoPersonal"),
+                hire_date=data.get("fechaIngreso"),
+                status_id = data.get("estadoEmpleado"),
+                status=data.get("nombre_EstadoEmpleado"),
+                supervisor_id=data.get("user_id_supervisor"),
+                supervisor_name=data.get("nombre_Supervisor"),
+                coworkers=data.get("colaboradores"),
+                work_schedule=data.get("horario_trabajo"),
+                absences = data.get("ausencias")
+                
+            )
+            employees.append(e)
+            
+    return employees
+
+
+# Add a dynamic greeting resource
+@mcp.resource("greeting://{name}")
+def get_greeting(name: str) -> str:
+    """Get a personalized greeting"""
+    return f"Hello, {name}!"
+
+
+
+if __name__ == "__main__":
+    result = employee("michelle")
+    print(result)        
