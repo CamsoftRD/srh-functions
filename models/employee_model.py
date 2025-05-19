@@ -6,15 +6,17 @@ from typing import Optional, List, Dict
 @dataclass
 class EmployeeModel:
     id: Optional[int] = None
+    user_id: Optional[int] = None
     full_name: Optional[str] = None
     first_name: Optional[str] = None
     second_name: Optional[str] = None
     last_name: Optional[str] = None
     sur_name: Optional[str] = None
     birthday: Optional[str] = None
+    department_id: Optional[int] = None
     department_name: Optional[str] = None
-    company_name: Optional[int] = None
-    company_id: Optional[str] = None
+    company_name: Optional[str] = None
+    company_id: Optional[int] = None
     position_name: Optional[str] = None
     email: Optional[str] = None
     work_email: Optional[str] = None
