@@ -7,13 +7,14 @@ import os
 
 mcp = FastMCP("Cam-Functions", dependencies=["requests"])
 
+
 header = {'Content-type': 'application/json',
             'x-api-key': '002002032323232320002SSS',
             'x-ui-culture': 'es-DO',
             }
 
-RRHH_BASE_URL = os.getenv("RRHH_BASE_URL", "http://rrhh.administracionapi.camsoft.com.do:8086")
-RRHH_PERSONAL_ACCESS_TOKEN = os.getenv("RRHH_PERSONAL_ACCESS_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiJlc21lcmxpbmVwIiwidW5pcXVlX25hbWUiOiJlc21lcmxpbmVwIiwicm9sZSI6IlVzZXIiLCJVc2VySUQiOiIzMjQ2IiwiRnVsbFVzZXJOYW1lIjoiRXNtZXJsaW4gUGFuaWFndWEiLCJEYXRlVXRsQWNjZXNzIjoiIiwiQ29tcGFueUlkIjoiMiIsIkNvbXBhbnlHcm91cElkIjoiMSIsIkNsaWVudElkIjoiIiwiQnJhbmNoT2ZmaWNlSWQiOiIiLCJDb21wYW55TmFtZSI6IkRyZXMuIE1hbGzDqW4gR3VlcnJhIiwiT2ZmaWNlTmFtZSI6IiIsIkVtYWlsIjoiZXNtZXJsaW5lcEBnbWFpbC5jb20iLCJpc2FkbWluIjoiVHJ1ZSIsIm5iZiI6MTc0NjczNzczMSwiZXhwIjoxNzQ4ODk3NzMxLCJpYXQiOjE3NDY3Mzc3MzF9.wiaNUYisJBRY8HU5gcCp2vScVj_j2WsVUMq34tORbIU")
+RRHH_BASE_URL = os.getenv("RRHH_BASE_URL", "")
+RRHH_PERSONAL_ACCESS_TOKEN = os.getenv("RRHH_PERSONAL_ACCESS_TOKEN", "")
 header["Authorization"] = f"bearer {RRHH_PERSONAL_ACCESS_TOKEN}"
 
 
@@ -122,6 +123,70 @@ def fetch_employee_by_user_id(user_id: int)-> EmployeeModel | None:
     except Exception as e:
         return {"error": str(e)}
     
+
+@mcp.tool()
+def add_absence(employee_id, from_date, to_date, comment, reason_code, cantidad) -> dict:
+    """
+    Establece una ausencia para un empleado.
+    
+    Parámetros:
+        param employee_id: ID del empleado (int).
+        param from_date: Fecha de inicio de la ausencia ejemplo: "2025-05-22T08:00:00".
+        param to_date: Fecha de fin de la ausencia ejemplo: "2025-05-22T08:00:00.
+        param comment: Comentario sobre la ausencia.
+        param reason_code: Código de la razón de la ausencia (int).
+        reason_codes:         
+            "vacaciones: 1,
+            "licencia": 2,
+            "permiso_dias": 3,
+            "permiso_horas": 4,
+            "excusa": 5
+        
+    
+    Retorna:
+         - diccionario con la respuesta de la insercion.
+    """
+    
+    
+    #employee_id = st.session_state.me.id
+    supervisor = 1074
+    body = [{
+        "Id_AccionWeb": 12,
+        "Id_Registro_Relacionado": employee_id,
+        "Fecha_Inicio": from_date,
+        "Fecha_Fin": to_date,
+        "Comentario": comment,
+        "Tipo_Ausencia": reason_code,
+        "Cantidad": cantidad,
+        "Persona_Asignada": supervisor,
+    }]
+    
+    response = r.request("POST", url=f"{RRHH_BASE_URL}/empleados/TransaccionAccionPersonalEmpleado", headers=header, json=body)
+
+    if response.status_code == 200:
+        data = response.json()['result']
+    
+    return data
+
+
+@mcp.resource("echo://{message}")
+def echo_resource(message: str) -> str:
+    """Echo a message as a resource"""
+    return f"Resource echo: {message}"
+
+
+@mcp.tool()
+def echo_tool(message: str) -> str:
+    """Echo a message as a tool"""
+    return f"Tool echo: {message}"
+
+
+@mcp.prompt()
+def echo_prompt(message: str) -> str:
+    """Create an echo prompt"""
+    return f"Please process this message: {message}"
+
+
 # Add a dynamic greeting resource
 @mcp.resource("greeting://{name}")
 def get_greeting(name: str) -> str:
@@ -131,5 +196,4 @@ def get_greeting(name: str) -> str:
 
 
 if __name__ == "__main__":
-    result = employee("michelle")
-    print(result)        
+    mcp.run()
