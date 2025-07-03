@@ -1,6 +1,10 @@
-def main():
-    print("Hello from cam-functions!")
+from fastapi import FastAPI
+from client  import main as m
+import asyncio
 
+app = FastAPI()
 
-if __name__ == "__main__":
-    main()
+@app.get("/")
+def read_root():
+    asyncio.run(m())
+    return {"message": "Hello World!"}
